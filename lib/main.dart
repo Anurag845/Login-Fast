@@ -7,16 +7,30 @@ void main() => runApp(MyApp());
 
 isLogged(context) async {
   SharedPreferences prefs = await SharedPreferences.getInstance();
-  bool loggedIn = prefs.getBool("loggedIn");
-  if(!loggedIn) {
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SignOptions(),
-        )
-      );
-    });
+  if(prefs.getBool("loggedIn") != null) {
+    bool loggedIn = prefs.getBool("loggedIn");
+    if(!loggedIn) {
+      Future.delayed(const Duration(seconds: 3), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => SignOptions(),
+          )
+        );
+      });
+    }
+    else {
+      String type = prefs.getString("type");
+      String username = prefs.getString("username");
+      Future.delayed(const Duration(seconds: 3), () {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => Password(type: type, username: username,),
+          ),
+        );
+      });
+    }
   }
   else {
     String type = prefs.getString("type");
