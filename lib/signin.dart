@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert' as JSON;
 import 'package:login_fast/pass.dart';
 import 'package:login_fast/phone.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 
 class SignOptions extends StatefulWidget {
@@ -13,8 +14,6 @@ class SignOptions extends StatefulWidget {
 }
 
 class _SignOptionsState extends State<SignOptions> {
-  bool isLoggedGoogle = false;
-  bool isLoggedFB = false;
 
   GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email'],);
   FacebookLogin _facebookLogin = FacebookLogin();
@@ -22,12 +21,14 @@ class _SignOptionsState extends State<SignOptions> {
   _loginGoogle() async {
     try{
       await _googleSignIn.signIn();
-      setState(() {
-        isLoggedGoogle = true;
-      });
+      String email = _googleSignIn.currentUser.email;
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      prefs.setBool("loggedIn",true);
+      prefs.setString("type","Google");
+      prefs.setString("username",email);
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (BuildContext context) => Password(type:"google",username:_googleSignIn.currentUser.email))
+        MaterialPageRoute(builder: (BuildContext context) => Password(type:"google",username:email))
       );
     } 
     catch (err) {
@@ -43,11 +44,11 @@ class _SignOptionsState extends State<SignOptions> {
         final token = result.accessToken.token;
         final graphResponse = await http.get('https://graph.facebook.com/v2.12/me?fields=name,picture,email&access_token=$token');
         final profile = JSON.jsonDecode(graphResponse.body);
-        print(profile);
-        setState(() {
-          userProfile = profile;
-          isLoggedFB = true;
-        });
+        userProfile = profile;
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        prefs.setBool("loggedIn",true);
+        prefs.setString("type","Facebook");
+        prefs.setString("username",userProfile["name"]);
         Navigator.push(
           context,
           MaterialPageRoute(builder: (BuildContext context) => Password(type:"facebook",username: userProfile["name"],))
@@ -55,10 +56,10 @@ class _SignOptionsState extends State<SignOptions> {
         break;
 
       case FacebookLoginStatus.cancelledByUser:
-        setState(() => isLoggedFB = false );
+        //setState(() => isLoggedFB = false );
         break;
       case FacebookLoginStatus.error:
-        setState(() => isLoggedFB = false );
+        //setState(() => isLoggedFB = false );
         break;
     }
   }

@@ -1,7 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:login_fast/pass.dart';
 import 'package:login_fast/signin.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() => runApp(MyApp());
+
+isLogged(context) async {
+  SharedPreferences prefs = await SharedPreferences.getInstance();
+  bool loggedIn = prefs.getBool("loggedIn");
+  if(!loggedIn) {
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => SignOptions(),
+        )
+      );
+    });
+  }
+  else {
+    String type = prefs.getString("type");
+    String username = prefs.getString("username");
+    Future.delayed(const Duration(seconds: 3), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => Password(type: type, username: username,),
+        ),
+      );
+    });
+  }
+}
 
 class MyApp extends StatefulWidget {
   @override
@@ -16,72 +45,19 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: SignOptions(),
+      home: Logo(),
     );
   }
-  
+}
 
-  /*GoogleSignIn _googleSignIn = GoogleSignIn(scopes: ['email'],);
-
-  _loginGoogle() async {
-    try{
-      await _googleSignIn.signIn();
-      setState(() {
-        
-      });
-    } 
-    catch (err) {
-      print(err);
-    }
-  }
-
-  _logout() {
-    _googleSignIn.signOut();
-    setState(() {
-      
-    });
-  }
-
+class Logo extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: Scaffold(
-        appBar: AppBar(
-          title: Text("Login"),
-          backgroundColor: Colors.black,
-        ),
-        body: Center(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: <Widget>[
-                OutlineButton(
-                  child: Text("Login with Google"),
-                  onPressed: () {
-                    _loginGoogle();
-                  },
-                ),
-                OutlineButton(
-                  child: Text("Login with Facebook"),
-                  onPressed: () {
-                    
-                  },
-                ),
-                OutlineButton(
-                  child: Text("Login with Phone"),
-                  onPressed: () {
-                    Navigator.push(context,
-                      MaterialPageRoute(builder: (BuildContext context) => Phone())
-                    );
-                  },
-                ),
-              ],
-            )
-          )
-        ),
+    isLogged(context);
+    return Scaffold(
+      body: Center(
+        child: Image.asset('assets/images/logo.png'),
       ),
     );
-  }*/
+  }
 }

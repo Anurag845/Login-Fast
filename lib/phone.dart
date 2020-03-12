@@ -1,6 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:login_fast/pass.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 class Phone extends StatefulWidget {
   @override
@@ -11,8 +13,27 @@ class _PhoneState extends State<Phone> {
   String phoneNo;
   String smsCode;
   String verificationId;
+  bool failure;
+
+  @override
+  void initState() {
+    super.initState();
+    failure = false;
+  }
+  
+  void proceed() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    prefs.setBool("loggedIn",true);
+    prefs.setString("type","Phone");
+    prefs.setString("username",phoneNo);
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => Password(type: "phone",username: phoneNo,)),
+    );
+  }
  
   Future<void> verifyPhone() async {
+
     final PhoneCodeAutoRetrievalTimeout autoRetrieve = (String verId) {
       this.verificationId = verId;
     };
@@ -26,14 +47,14 @@ class _PhoneState extends State<Phone> {
  
     final PhoneVerificationCompleted verifiedSuccess = (AuthCredential credential) {
       print('verified');
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => Password(type: "phone",username: phoneNo,)),
-      );
+      proceed();
     };
  
     final PhoneVerificationFailed veriFailed = (AuthException exception) {
       print('${exception.message}');
+      setState(() {
+        failure = true;
+      });
     };
  
     await FirebaseAuth.instance.verifyPhoneNumber(
@@ -66,10 +87,7 @@ class _PhoneState extends State<Phone> {
                 FirebaseAuth.instance.currentUser().then((user) {
                   if (user != null) {
                     Navigator.of(context).pop();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => Password(type: "phone",username: phoneNo,)),
-                    );
+                    proceed();
                   } 
                   else {
                     Navigator.of(context).pop();
@@ -91,12 +109,8 @@ class _PhoneState extends State<Phone> {
     );
 
     FirebaseAuth _auth = FirebaseAuth.instance;
-    final FirebaseUser user = await _auth.signInWithCredential(credential).then((user) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => Password(type:"phone",username: phoneNo,)),
-      );
+    await _auth.signInWithCredential(credential).then((user) {
+      proceed();
     }).catchError((e) {
       print(e);
     });
@@ -140,6 +154,12 @@ class _PhoneState extends State<Phone> {
                 elevation: 2.0,
                 color: Colors.black,
               ),
+              failure
+              ? Padding(
+                padding: EdgeInsets.all(15.0),
+                child: Text("Verification failed."),
+              )
+              : Container(),
             ],
           )
         ),
